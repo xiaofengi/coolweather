@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">酷欧天气</string>
+    <string name="setting_activity_name">设置</string>
 </resources>

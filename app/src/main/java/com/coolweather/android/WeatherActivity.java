@@ -3,7 +3,6 @@ package com.coolweather.android;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.os.Build;
 import android.preference.PreferenceManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -64,13 +63,18 @@ public class WeatherActivity extends AppCompatActivity {
 
     public DrawerLayout drawerLayout;
 
-    private Button navButton;
+    SharedPreferences preferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        Button navButton;
+
+        Button setButton;
+
         View decorView = getWindow().getDecorView();
+        //设置系统状态栏透明
         decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE); //android5.0系统以上
         getWindow().setStatusBarColor(Color.TRANSPARENT);
 
@@ -88,11 +92,12 @@ public class WeatherActivity extends AppCompatActivity {
         carWashText = (TextView)findViewById(R.id.car_wash_text);
         sportText = (TextView)findViewById(R.id.sport_text);
         bingPicImg = (ImageView)findViewById(R.id.bing_pic_img);
+        setButton =(Button)findViewById(R.id.setting);
 
-        swipeRefreshLayout = (SwipeRefreshLayout)findViewById(R.id.swipe_refresh);       //滑动刷新
+        swipeRefreshLayout = (SwipeRefreshLayout)findViewById(R.id.swipe_refresh);
         swipeRefreshLayout.setColorSchemeResources(R.color.colorPrimary);
 
-        drawerLayout = (DrawerLayout)findViewById(R.id.drawer_layout);                   //滑动
+        drawerLayout = (DrawerLayout)findViewById(R.id.drawer_layout);                   //点击滑动菜单
         navButton = (Button)findViewById(R.id.nav_button);
         navButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -102,7 +107,7 @@ public class WeatherActivity extends AppCompatActivity {
         });
 
 
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        preferences = PreferenceManager.getDefaultSharedPreferences(this);
         String bingPic =preferences.getString("bing_pic", null);     //加载必应图片
         if(bingPic != null){
             Glide.with(this).load(bingPic).into(bingPicImg);
@@ -119,10 +124,20 @@ public class WeatherActivity extends AppCompatActivity {
             weatherLayout.setVisibility(View.INVISIBLE);
             requestWeather(mWeatherId);
         }
-        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {   //滑动刷新
             @Override
             public void onRefresh() {
                 requestWeather(mWeatherId);
+            }
+        });
+
+        //点击设置
+        setButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent setIntent = new Intent(WeatherActivity.this, SettingActivity.class);
+                startActivity(setIntent);
             }
         });
     }
@@ -154,6 +169,7 @@ public class WeatherActivity extends AppCompatActivity {
 
     //网上查询天气信息
     public void requestWeather(final String weatherId){
+        mWeatherId = weatherId;    //更新天气id
         String weatherUrl = "http://guolin.tech/api/weather?cityid=" + weatherId + "&key=86e7876195234876993eddb4ce2a6175";
         HttpUtil.sendOkHttpRequest(weatherUrl, new Callback() {
             @Override
@@ -191,7 +207,7 @@ public class WeatherActivity extends AppCompatActivity {
         });
     }
 
-    //显示天气信息
+    //显示天气信息和启动后台更新服务
     public  void showWeatherInfo(Weather weather){
         String cityName = weather.basic.cityName;
         String updateTime = weather.basic.update.updateTime.split(" ")[1];
@@ -225,7 +241,12 @@ public class WeatherActivity extends AppCompatActivity {
         carWashText.setText(carWah);
         sportText.setText(sport);
         weatherLayout.setVisibility(View.VISIBLE);
-        Intent intent = new Intent(WeatherActivity.this, AutoUpdateService.class);
-        startService(intent);
+
+        //启动后台更新服务
+        boolean isAutoRefresh = preferences.getBoolean("is_auto_refresh", true);
+        if(isAutoRefresh) {
+            Intent intent = new Intent(WeatherActivity.this, AutoUpdateService.class);
+            startService(intent);
+        }
     }
 }

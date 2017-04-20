@@ -3,16 +3,14 @@ package com.coolweather.android.service;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.IBinder;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
-import android.support.annotation.IntDef;
-import android.widget.Toast;
+import android.util.Log;
 
-import com.bumptech.glide.Glide;
-import com.coolweather.android.WeatherActivity;
 import com.coolweather.android.gson.Weather;
 import com.coolweather.android.util.HttpUtil;
 import com.coolweather.android.util.Utility;
@@ -39,8 +37,11 @@ public class AutoUpdateService extends Service {
         updateWeather();
         updateBingPic();
         AlarmManager manager = (AlarmManager)getSystemService(ALARM_SERVICE);
-        int AN_HOUR = 8*60*60*1000;
-        long triggerAtTime = SystemClock.elapsedRealtime() + AN_HOUR;
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        //读取更新频率值
+        int refreshNum = preferences.getInt("refresh_num", 8);
+        int MY_HOUR = refreshNum*60*60*1000;
+        long triggerAtTime = SystemClock.elapsedRealtime() + MY_HOUR;
         Intent i = new Intent(this, AutoUpdateService.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, i, 0);
         manager.cancel(pendingIntent);
@@ -77,7 +78,7 @@ public class AutoUpdateService extends Service {
         }
     }
 
-    //后台更新
+    //后台更新图片
     private void updateBingPic(){
         String requestBingPic = "http://guolin.tech/api/bing_pic";
         HttpUtil.sendOkHttpRequest(requestBingPic, new Callback() {
