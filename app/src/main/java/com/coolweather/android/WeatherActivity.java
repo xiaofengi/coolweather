@@ -1,19 +1,24 @@
 package com.coolweather.android;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.preference.PreferenceManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -108,12 +113,16 @@ public class WeatherActivity extends AppCompatActivity {
 
 
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+         /*
         String bingPic =preferences.getString("bing_pic", null);     //加载必应图片
         if(bingPic != null){
             Glide.with(this).load(bingPic).into(bingPicImg);
         }else {
             loadBingPic();
         }
+        */
+
         String weatherString = preferences.getString("weather", null);
         if(weatherString != null){                                                      //有缓存
             Weather weather = Utility.handleWeatherResponse(weatherString);
@@ -142,35 +151,19 @@ public class WeatherActivity extends AppCompatActivity {
         });
     }
 
-    //获取必应图片
-    private void loadBingPic(){
-        String requestBingPic = "http://guolin.tech/api/bing_pic";
-        HttpUtil.sendOkHttpRequest(requestBingPic, new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                e.printStackTrace();
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                final String bingPic = response.body().string();
-                SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(WeatherActivity.this).edit();
-                editor.putString("bing_pic", bingPic);
-                editor.apply();
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Glide.with(WeatherActivity.this).load(bingPic).into(bingPicImg);
-                    }
-                });
-            }
-        });
-    }
-
     //网上查询天气信息
     public void requestWeather(final String weatherId){
+        /*
+        ConnectivityManager connectivityManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+        if(networkInfo != null && networkInfo.isAvailable())
+        {
+            Toast.makeText(WeatherActivity.this, "无网络连接", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        */
         mWeatherId = weatherId;    //更新天气id
-        String weatherUrl = "http://guolin.tech/api/weather?cityid=" + weatherId + "&key=86e7876195234876993eddb4ce2a6175";
+        String weatherUrl = "https://free-api.heweather.com/x3/weather?cityid=" + weatherId + "&key=86e7876195234876993eddb4ce2a6175";
         HttpUtil.sendOkHttpRequest(weatherUrl, new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
@@ -213,6 +206,10 @@ public class WeatherActivity extends AppCompatActivity {
         String updateTime = weather.basic.update.updateTime.split(" ")[1];
         String degree = weather.now.temperature + "℃";
         String weatherInfo = weather.now.more.info;
+        String weatherCode = weather.now.more.weatherCode;
+
+        //显示天气信息
+        loadBGI(weatherCode);
         titleCity.setText(cityName);
         titleUpdateTime.setText(updateTime);
         degreeText.setText(degree);
@@ -249,4 +246,123 @@ public class WeatherActivity extends AppCompatActivity {
             startService(intent);
         }
     }
+
+    //加载背景图
+    private void loadBGI(String weatherCode){
+        switch (weatherCode){
+            case "100":
+                bingPicImg.setImageResource(R.drawable.sunny);
+                break;
+            case "101":
+                bingPicImg.setImageResource(R.drawable.cloudy);
+                break;
+            case "102":
+                bingPicImg.setImageResource(R.drawable.fewclouds);
+                break;
+            case "103":
+                bingPicImg.setImageResource(R.drawable.partlycloudy);
+                break;
+            case "104":
+                bingPicImg.setImageResource(R.drawable.overcast);
+                break;
+            case "201":
+                bingPicImg.setImageResource(R.drawable.calm);
+                break;
+            case "200":
+            case "202":
+            case "203":
+            case "204":
+            case "205":
+            case "206":
+            case "207":
+            case "208":
+            case "209":
+            case "210":
+            case "211":
+            case "212":
+            case "213":
+                bingPicImg.setImageResource(R.drawable.gale);
+                break;
+            case "300":
+            case "301":
+            case "302":
+            case "303":
+            case "304":
+            case "305":
+            case "306":
+            case "307":
+            case "308":
+            case "309":
+            case "310":
+            case "311":
+            case "312":
+            case "313":
+                bingPicImg.setImageResource(R.drawable.rain);
+                break;
+            case "400":
+            case "401":
+            case "402":
+            case "403":
+            case "404":
+            case "405":
+            case "406":
+            case "407":
+                bingPicImg.setImageResource(R.drawable.snowstorm);
+                break;
+            case "500":
+            case "501":
+                bingPicImg.setImageResource(R.drawable.foggy);
+                break;
+            case "502":
+                bingPicImg.setImageResource(R.drawable.haze);
+                break;
+            case "503":
+            case "504":
+                bingPicImg.setImageResource(R.drawable.foggy);
+                break;
+            case "507":
+            case "508":
+                bingPicImg.setImageResource(R.drawable.duststorm);
+                break;
+            case "900":
+                bingPicImg.setImageResource(R.drawable.hot);
+                break;
+            case "901":
+                bingPicImg.setImageResource(R.drawable.cold);
+                break;
+            case "999":
+                bingPicImg.setImageResource(R.drawable.error);
+                break;
+            default:
+                bingPicImg.setImageResource(R.drawable.error);
+                break;
+        }
+    }
+
+        /*
+    //加载必应图片
+    private void loadBingPic(){
+        String requestBingPic = "http://guolin.tech/api/bing_pic";
+        HttpUtil.sendOkHttpRequest(requestBingPic, new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                e.printStackTrace();
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                final String bingPic = response.body().string();
+                SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(WeatherActivity.this).edit();
+                editor.putString("bing_pic", bingPic);
+                editor.apply();
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Glide.with(WeatherActivity.this).load(bingPic).into(bingPicImg);
+                    }
+                });
+            }
+        });
+    }
+    */
 }

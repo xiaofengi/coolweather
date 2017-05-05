@@ -3,6 +3,7 @@
     package="com.coolweather.android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:name="org.litepal.LitePalApplication"
@@ -27,9 +28,11 @@
             android:exported="false">
         </service>
 
-        <activity android:name=".SettingActivity"
+        <activity
+            android:name=".SettingActivity"
             android:label="@string/setting_activity_name">
         </activity>
+
     </application>
 
 </manifest>

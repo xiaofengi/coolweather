@@ -40,6 +40,7 @@ public class AutoUpdateService extends Service {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
         //读取更新频率值
         int refreshNum = preferences.getInt("refresh_num", 8);
+        Log.d("main", "refresh number is " + refreshNum);
         int MY_HOUR = refreshNum*60*60*1000;
         long triggerAtTime = SystemClock.elapsedRealtime() + MY_HOUR;
         Intent i = new Intent(this, AutoUpdateService.class);
@@ -97,4 +98,15 @@ public class AutoUpdateService extends Service {
         });
     }
 
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        Log.d("main", "update service create");
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Log.d("main", "update service destroy");
+    }
 }

@@ -11,7 +11,7 @@ public class County extends DataSupport {
 
     private String countyName;
 
-    private String weatherId;
+    private String weatherId;  //和风天气api上的cityId
 
     private int cityId;
 

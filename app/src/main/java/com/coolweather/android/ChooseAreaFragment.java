@@ -1,7 +1,10 @@
 package com.coolweather.android;
 
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -54,7 +57,7 @@ public class ChooseAreaFragment extends Fragment {
 
     private ArrayAdapter<String> adapter;
 
-    private List<String> dataList = new ArrayList<>();
+    private List<String> dataList = new ArrayList<>();  //当前页面list存储信息
 
     private List<Province> provinceList;
 
@@ -94,17 +97,40 @@ public class ChooseAreaFragment extends Fragment {
                     selectedCity = cityList.get(i);
                     queryCounties();
                 }else if(currentLevel == LEVEL_COUNTY){
+                    ConnectivityManager connectivityManager = (ConnectivityManager)getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+                    NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
                     String weatherId = countyList.get(i).getWeatherId();
                     if(getActivity() instanceof MainActivity) {
-                        Intent intent = new Intent(getActivity(), WeatherActivity.class);
-                        intent.putExtra("weather_id", weatherId);
-                        startActivity(intent);
-                        getActivity().finish();
+                        if(networkInfo == null || !networkInfo.isAvailable())
+                        {
+                            getActivity().runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(getActivity(), "无网络连接", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }else {
+                            Intent intent = new Intent(getActivity(), WeatherActivity.class);
+                            intent.putExtra("weather_id", weatherId);
+                            startActivity(intent);
+                            getActivity().finish();
+                        }
                     }else if(getActivity() instanceof WeatherActivity){
-                        WeatherActivity activity = (WeatherActivity)getActivity();
-                        activity.drawerLayout.closeDrawers();
-                        activity.swipeRefreshLayout.setRefreshing(true);
-                        activity.requestWeather(weatherId);
+                        WeatherActivity activity = (WeatherActivity) getActivity();    //判断有无网络
+                        if(networkInfo == null || !networkInfo.isAvailable())
+                        {
+                            activity.drawerLayout.closeDrawers();
+                            getActivity().runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(getActivity(), "无网络连接", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                        }else {
+                            activity.drawerLayout.closeDrawers();
+                            activity.swipeRefreshLayout.setRefreshing(true);
+                            activity.requestWeather(weatherId);
+                        }
                     }
                 }
             }
