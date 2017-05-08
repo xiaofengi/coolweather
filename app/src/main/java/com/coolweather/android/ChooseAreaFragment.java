@@ -112,6 +112,7 @@ public class ChooseAreaFragment extends Fragment {
                         }else {
                             Intent intent = new Intent(getActivity(), WeatherActivity.class);
                             intent.putExtra("weather_id", weatherId);
+                            intent.putExtra("city_name", countyList.get(i).getCountyName());
                             startActivity(intent);
                             getActivity().finish();
                         }
@@ -127,9 +128,21 @@ public class ChooseAreaFragment extends Fragment {
                             }
                         });
                         }else {
-                            activity.drawerLayout.closeDrawers();
-                            activity.swipeRefreshLayout.setRefreshing(true);
-                            activity.requestWeather(weatherId);
+                            if(countyList.get(i).isSelect())
+                            {
+                                getActivity().runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText(getActivity(), "已选择该城市", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                            }else {
+                                countyList.get(i).setSelect(true);       //为已选择的县添加标记
+                                countyList.get(i).saveFast();            //立即保存
+                                activity.drawerLayout.closeDrawers();
+                                activity.swipeRefreshLayout.setRefreshing(true);
+                                activity.requestWeather(weatherId, countyList.get(i).getCountyName());
+                            }
                         }
                     }
                 }

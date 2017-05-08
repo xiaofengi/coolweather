@@ -11,6 +11,7 @@ import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.coolweather.android.WeatherActivity;
 import com.coolweather.android.gson.Weather;
 import com.coolweather.android.util.HttpUtil;
 import com.coolweather.android.util.Utility;
@@ -22,6 +23,9 @@ import okhttp3.Callback;
 import okhttp3.Response;
 
 public class AutoUpdateService extends Service {
+
+    private int i;
+
     public AutoUpdateService() {
     }
 
@@ -35,7 +39,7 @@ public class AutoUpdateService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         updateWeather();
-        updateBingPic();
+        //updateBingPic();
         AlarmManager manager = (AlarmManager)getSystemService(ALARM_SERVICE);
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
         //读取更新频率值
@@ -54,28 +58,31 @@ public class AutoUpdateService extends Service {
     //后台更新天气
     private void updateWeather(){
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        String weatherString = preferences.getString("weather", null);
-        if(weatherString != null){    //有缓存才更新
-            Weather weather = Utility.handleWeatherResponse(weatherString);
-            String weatherId = weather.basic.weatherId;
-            String weatherUrl = "http://guolin.tech/api/weather?cityid=" + weatherId + "&key=86e7876195234876993eddb4ce2a6175";
-            HttpUtil.sendOkHttpRequest(weatherUrl, new Callback() {
-                @Override
-                public void onFailure(Call call, IOException e) {
-                    e.printStackTrace();
-                }
-
-                @Override
-                public void onResponse(Call call, Response response) throws IOException {
-                    final String responseText = response.body().string();
-                    final Weather weather = Utility.handleWeatherResponse(responseText);
-                    if(weather != null && "ok".equals(weather.status)){
-                        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(AutoUpdateService.this).edit();
-                        editor.putString("weather", responseText);    //利用SharedPreferences缓存数据
-                        editor.apply();
+        for(i = 0;i < WeatherActivity.city_name_numbers; i++) {
+            String weatherString = preferences.getString("weather" +i, null);
+            if (weatherString != null) {    //有缓存才更新
+                Weather weather = Utility.handleWeatherResponse(weatherString);
+                String weatherId = weather.basic.weatherId;
+                String weatherUrl = "http://guolin.tech/api/weather?cityid=" + weatherId + "&key=86e7876195234876993eddb4ce2a6175";
+                HttpUtil.sendOkHttpRequest(weatherUrl, new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                        e.printStackTrace();
                     }
-                }
-            });
+
+                    @Override
+                    public void onResponse(Call call, Response response) throws IOException {
+                        final String responseText = response.body().string();
+                        final Weather weather = Utility.handleWeatherResponse(responseText);
+                        if (weather != null && "ok".equals(weather.status)) {
+                            SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(AutoUpdateService.this).edit();
+                            editor.putString("weather"+i, responseText);    //利用SharedPreferences缓存数据
+                            Log.d("main", "update number is " + i);
+                            editor.apply();
+                        }
+                    }
+                });
+            }
         }
     }
 

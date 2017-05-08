@@ -6,6 +6,7 @@ import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.RelativeLayout;
 import android.widget.Switch;
@@ -27,6 +28,8 @@ public class SettingActivity extends AppCompatActivity {
     boolean refresh_is;              //是否自动刷新
 
     public static int refresh_num;   //刷新时间
+
+    Button backButtonSetting;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,5 +101,12 @@ public class SettingActivity extends AppCompatActivity {
             }
         });
 
+        backButtonSetting = (Button)findViewById(R.id.back_button_setting);
+        backButtonSetting.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
     }
 }

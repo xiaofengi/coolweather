@@ -60,7 +60,7 @@ public class Utility {
     }
 
 
-    //解析省级数据
+    //解析县级数据
     public static boolean handleCountyResponse(String response, int cityId){
         if(!TextUtils.isEmpty(response)){
             try {
@@ -71,6 +71,7 @@ public class Utility {
                     county.setCountyName(countyObject.getString("name"));
                     county.setWeatherId(countyObject.getString("weather_id"));
                     county.setCityId(cityId);
+                    county.setSelect(false);
                     county.save();
                 }
                 return true;
@@ -85,7 +86,7 @@ public class Utility {
     public static Weather handleWeatherResponse(String response){
         try {
             JSONObject jsonObject = new JSONObject(response);
-            JSONArray jsonArray = jsonObject.getJSONArray("HeWeather data service 3.0");
+            JSONArray jsonArray = jsonObject.getJSONArray("HeWeather");
             String weatherContent = jsonArray.getJSONObject(0).toString();
             return new Gson().fromJson(weatherContent, Weather.class);
         }catch (Exception e){

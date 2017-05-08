@@ -4,10 +4,27 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <RelativeLayout
-        android:layout_marginTop="20dp"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="30dp">
+        android:layout_height="40dp"
+        android:background="#50000020">
+        <Button
+            android:id="@+id/back_button_setting"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_marginStart="10dp"
+            android:layout_gravity="center_vertical"
+            android:background="@drawable/back"/>
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#33000000" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="45dp">
 
         <TextView
             android:layout_width="wrap_content"
@@ -22,6 +39,7 @@
             android:id="@+id/is_auto_refresh"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
             android:layout_alignParentEnd="true">
         </Switch>
 
@@ -35,7 +53,7 @@
     <RelativeLayout
         android:id="@+id/layout_refresh"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="45dp">
 
         <TextView
             android:layout_width="wrap_content"
@@ -58,6 +76,7 @@
             android:layout_width="wrap_content"
             android:layout_height="16dp"
             android:layout_margin="10dp"
+            android:layout_centerVertical="true"
             android:layout_alignParentEnd="true"
             android:background="@drawable/right_arrow"/>
 

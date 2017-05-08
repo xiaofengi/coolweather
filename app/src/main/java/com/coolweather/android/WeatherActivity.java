@@ -1,11 +1,8 @@
 package com.coolweather.android;
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.preference.PreferenceManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -15,15 +12,15 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.ScrollView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.bumptech.glide.Glide;
 import com.coolweather.android.gson.Forecast;
 import com.coolweather.android.gson.Weather;
 import com.coolweather.android.service.AutoUpdateService;
@@ -31,6 +28,8 @@ import com.coolweather.android.util.HttpUtil;
 import com.coolweather.android.util.Utility;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -40,7 +39,11 @@ public class WeatherActivity extends AppCompatActivity {
 
     private ScrollView weatherLayout;
 
-    private TextView titleCity;
+    private Spinner titleCity;
+
+    private List<String> city_name_list = new ArrayList<>(0);
+
+    public static int city_name_numbers;
 
     private TextView titleUpdateTime;
 
@@ -66,9 +69,13 @@ public class WeatherActivity extends AppCompatActivity {
 
     private String mWeatherId;
 
+    public static String mCityName;
+
     public DrawerLayout drawerLayout;
 
     SharedPreferences preferences;
+
+    ArrayAdapter<String> adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,7 +93,7 @@ public class WeatherActivity extends AppCompatActivity {
         setContentView(R.layout.activity_weather_acivity);
         //初始化控件
         weatherLayout = (ScrollView)findViewById(R.id.weather_layout);
-        titleCity = (TextView)findViewById(R.id.title_city);
+        titleCity = (Spinner)findViewById(R.id.title_city);
         titleUpdateTime = (TextView)findViewById(R.id.title_update_time);
         degreeText = (TextView)findViewById(R.id.degree_text);
         weatherInfoText = (TextView)findViewById(R.id.weather_info_text);
@@ -123,21 +130,55 @@ public class WeatherActivity extends AppCompatActivity {
         }
         */
 
-        String weatherString = preferences.getString("weather", null);
+         city_name_numbers = preferences.getInt("cnn", 0);
+         Log.d("main", "city name numbers are " + String.valueOf(city_name_numbers));
+         for(int i = 0; i < city_name_numbers; i++){
+             String cityName = preferences.getString("cn"+i, null);
+             city_name_list.add(cityName);
+             Log.d("main", "city name " + i + " is " + cityName);
+         }
+        adapter = new ArrayAdapter<>(WeatherActivity.this, R.layout.spinner_display_style,R.id.spinnerText, city_name_list);
+        adapter.setDropDownViewResource(R.layout.spinner_dropdown_style);
+        titleCity.setAdapter(adapter);
+        //titleCity.setSelection(city_name_numbers-1);
+        //切换城市
+        titleCity.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                Log.d("main","position is " + position);
+                String weatherString = preferences.getString("weather"+String.valueOf(position), null);
+                if(weatherString != null){                                                      //有缓存
+                    Weather weather = Utility.handleWeatherResponse(weatherString);
+                    mWeatherId = weather.basic.weatherId;
+                    mCityName = weather.basic.cityName;
+                    showWeatherInfo(weather);
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+
+
+        final String weatherString = preferences.getString("weather"+String.valueOf(city_name_numbers-1), null);
         if(weatherString != null){                                                      //有缓存
             Weather weather = Utility.handleWeatherResponse(weatherString);
             mWeatherId = weather.basic.weatherId;
+            mCityName = weather.basic.cityName;
             showWeatherInfo(weather);
         }else {
             mWeatherId = getIntent().getStringExtra("weather_id");                      //无缓存
+            mCityName = getIntent().getStringExtra("city_name");
             weatherLayout.setVisibility(View.INVISIBLE);
-            requestWeather(mWeatherId);
+            requestWeather(mWeatherId, mCityName);
         }
 
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {   //滑动刷新
             @Override
             public void onRefresh() {
-                requestWeather(mWeatherId);
+                requestWeather(mWeatherId, null);
             }
         });
 
@@ -149,10 +190,11 @@ public class WeatherActivity extends AppCompatActivity {
                 startActivity(setIntent);
             }
         });
+
     }
 
     //网上查询天气信息
-    public void requestWeather(final String weatherId){
+    public void requestWeather(final String weatherId, String cityName){
         /*
         ConnectivityManager connectivityManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
@@ -162,8 +204,21 @@ public class WeatherActivity extends AppCompatActivity {
             return false;
         }
         */
+        if(cityName!=null){
+            mCityName = cityName;
+            city_name_list.add(mCityName);
+            city_name_numbers++;
+            adapter.notifyDataSetChanged();
+            titleCity.setSelection(city_name_numbers-1);
+            Log.d("main", "mCityName is " + mCityName);
+            SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(WeatherActivity.this).edit();
+            editor.putInt("cnn", city_name_numbers);
+            editor.putString("cn"+String.valueOf(city_name_numbers-1), mCityName);
+            editor.apply();
+            Log.d("main", "now cnn is " + city_name_numbers);
+        }
         mWeatherId = weatherId;    //更新天气id
-        String weatherUrl = "https://free-api.heweather.com/x3/weather?cityid=" + weatherId + "&key=86e7876195234876993eddb4ce2a6175";
+        String weatherUrl = "http://guolin.tech/api/weather?cityid=" + weatherId + "&key=86e7876195234876993eddb4ce2a6175";
         HttpUtil.sendOkHttpRequest(weatherUrl, new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
@@ -186,7 +241,8 @@ public class WeatherActivity extends AppCompatActivity {
                     public void run() {
                         if(weather != null && "ok".equals(weather.status)){
                             SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(WeatherActivity.this).edit();
-                            editor.putString("weather", responseText);    //利用SharedPreferences缓存数据
+                            editor.putString("cn"+String.valueOf(city_name_numbers-1), weather.basic.cityName);
+                            editor.putString("weather"+String.valueOf(city_name_numbers-1), responseText);    //利用SharedPreferences缓存数据
                             editor.apply();
                             showWeatherInfo(weather);
                         }
@@ -202,7 +258,6 @@ public class WeatherActivity extends AppCompatActivity {
 
     //显示天气信息和启动后台更新服务
     public  void showWeatherInfo(Weather weather){
-        String cityName = weather.basic.cityName;
         String updateTime = weather.basic.update.updateTime.split(" ")[1];
         String degree = weather.now.temperature + "℃";
         String weatherInfo = weather.now.more.info;
@@ -210,7 +265,6 @@ public class WeatherActivity extends AppCompatActivity {
 
         //显示天气信息
         loadBGI(weatherCode);
-        titleCity.setText(cityName);
         titleUpdateTime.setText(updateTime);
         degreeText.setText(degree);
         weatherInfoText.setText(weatherInfo);
