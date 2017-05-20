@@ -47,12 +47,12 @@ public class SettingActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 Intent intent = new Intent(SettingActivity.this, AutoUpdateService.class);
-                if (isChecked){
+                if (isChecked){   //选中则启动后台更新服务
                     refresh_is = true;
                     editor.putBoolean("is_auto_refresh", true);
                     editor.apply();
                     startService(intent);
-                }else {
+                }else {           //被取消则停止后台更新服务
                     refresh_is = false;
                     editor.putBoolean("is_auto_refresh", false);
                     editor.apply();

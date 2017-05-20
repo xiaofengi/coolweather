@@ -21,4 +21,7 @@ public class Weather {
 
     @SerializedName("daily_forecast")
     public List<Forecast> forecastList;   //天气预报
+
+    @SerializedName("hourly_forecast")
+    public List<Hour> hourList;
 }

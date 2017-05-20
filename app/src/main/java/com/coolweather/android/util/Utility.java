@@ -21,7 +21,7 @@ public class Utility {
     public static boolean handleProvinceResponse(String response){
         if(!TextUtils.isEmpty(response)){
             try {
-                JSONArray allProvinces = new JSONArray(response);
+                JSONArray allProvinces = new JSONArray(response);  //转化成json数组
                 for(int i = 0;i < allProvinces.length();i++){
                     JSONObject provinceObject = allProvinces.getJSONObject(i);
                     Province province = new Province();
@@ -86,9 +86,9 @@ public class Utility {
     public static Weather handleWeatherResponse(String response){
         try {
             JSONObject jsonObject = new JSONObject(response);
-            JSONArray jsonArray = jsonObject.getJSONArray("HeWeather");
+            JSONArray jsonArray = jsonObject.getJSONArray("HeWeather");    //json键值
             String weatherContent = jsonArray.getJSONObject(0).toString();
-            return new Gson().fromJson(weatherContent, Weather.class);
+            return new Gson().fromJson(weatherContent, Weather.class);     //gson解析
         }catch (Exception e){
             e.printStackTrace();
         }
